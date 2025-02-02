@@ -1,4 +1,4 @@
-package com.be.stack.game;
+package com.be.stack.game.rest;
 
 public class HttpContentType {
 
