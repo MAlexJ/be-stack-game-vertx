@@ -35,18 +35,15 @@ public class UserHandler {
     Future<JsonObject> jsonObjectFuture = userRepository.aggregateFullUserInfoByUserId(command);
 
     jsonObjectFuture.map(jsonObject -> {
-        JsonArray result = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
+      JsonArray result = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
 
-        JsonObject object = result.getJsonObject(0);
+      JsonObject object = result.getJsonObject(0);
 
-        UserDto userDto
-          = object.mapTo(UserDto.class);
+      UserDto userDto = object.mapTo(UserDto.class);
 
-        System.out.printf("");
+      System.out.printf("");
 
-        return context.json(userDto);
-//          return "Hello cat";
-      }).onSuccess(r -> response.setStatusCode(200))
-      .onFailure(t -> response.setStatusCode(400).end(t.getMessage()));
+      return context.json(userDto); // .onSuccess(r -> response.setStatusCode(200))
+    }).onFailure(t -> response.setStatusCode(400).end(t.getMessage()));
   }
 }

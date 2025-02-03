@@ -19,7 +19,7 @@ public class MainVerticle extends AbstractVerticle {
 
   private final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
-  private final Integer port = Optional.of(dotenv.get("SERVER_PORT", "8080")).map(Integer::parseInt)
+  private final Integer port = Optional.of(dotenv.get("PORT", "8080")).map(Integer::parseInt)
     .orElseThrow(() -> new RuntimeException("Server port not set"));
 
   private MongoClient initMongoClient() {
