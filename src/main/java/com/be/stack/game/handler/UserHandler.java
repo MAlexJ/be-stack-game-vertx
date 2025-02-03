@@ -2,7 +2,6 @@ package com.be.stack.game.handler;
 
 import com.be.stack.game.dto.UserDto;
 import com.be.stack.game.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
@@ -11,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.RoutingContext;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 public class UserHandler {
@@ -23,11 +23,28 @@ public class UserHandler {
     this.userRepository = new UserRepository(mongoClient);
   }
 
-  public void findAllUserInfoByUserId(RoutingContext context) {
+  public void findAllUserInfoByUserId(RoutingContext ctx) {
+    ctx.vertx().executeBlocking(() -> {
+      Long userId = Optional.ofNullable(ctx.get("userId")).map(String::valueOf).map(Long::parseLong).orElseThrow();
+      JsonObject command = userRepository.commandFindFullUserInfoById(userId);
+      return userRepository.aggregateFullUserInfoByUserId(command) //
+        .map(mapJsonObjectToUserDto()) //
+        .onSuccess(ctx::json) //
+        .onFailure(err -> ctx.fail(400, err));
+    });
+  }
 
-    ObjectMapper mapper = new ObjectMapper();
+
+  private Function<JsonObject, UserDto> mapJsonObjectToUserDto() {
+    return jsonObject -> {
+      var jsonArray = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
+      JsonObject userJsonObject = jsonArray.getJsonObject(0);
+      return userJsonObject.mapTo(UserDto.class);
+    };
+  }
 
 
+  public void findAllUserInfoByUserIdOld(RoutingContext context) {
     Long userId = Optional.ofNullable(context.get("userId")).map(String::valueOf).map(Long::parseLong).orElseThrow();
     HttpServerResponse response = context.response();
 
@@ -41,22 +58,19 @@ public class UserHandler {
 
         UserDto userDto = object.mapTo(UserDto.class);
 
-        System.out.printf("");
+        LOG.info("userDto: " + userDto);
 
-//      vertx.executeBlocking(promise -> {
-//        User user = userRepository.findById(123); // Долгая операция
-//        promise.complete(user);
-//      }, res -> {
-//        if (res.succeeded()) {
-//          ctx.json(res.result());
-//        } else {
-//          ctx.fail(500);
-//        }
-//      });
+//        vertx.executeBlocking(promise -> {
+//          GameDataEntity gameData = gameDataRepository.findById(123); // Блокирующая операция
+//          promise.complete(gameData);
+//        }).onSuccess(gameData -> {
+//          ctx.json(gameData);
+//        }).onFailure(err -> {
+//          ctx.fail(500, err);
+//        });
 
         return object; //
       }).onSuccess(json -> response.setStatusCode(200).end(json.encodePrettily()))
-
       .onFailure(t -> response.setStatusCode(400).end(t.getMessage()));
   }
 }
