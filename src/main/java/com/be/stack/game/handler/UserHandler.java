@@ -35,15 +35,28 @@ public class UserHandler {
     Future<JsonObject> jsonObjectFuture = userRepository.aggregateFullUserInfoByUserId(command);
 
     jsonObjectFuture.map(jsonObject -> {
-      JsonArray result = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
+        JsonArray result = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
 
-      JsonObject object = result.getJsonObject(0);
+        JsonObject object = result.getJsonObject(0);
 
-      UserDto userDto = object.mapTo(UserDto.class);
+        UserDto userDto = object.mapTo(UserDto.class);
 
-      System.out.printf("");
+        System.out.printf("");
 
-      return context.json(userDto); // .onSuccess(r -> response.setStatusCode(200))
-    }).onFailure(t -> response.setStatusCode(400).end(t.getMessage()));
+//      vertx.executeBlocking(promise -> {
+//        User user = userRepository.findById(123); // Долгая операция
+//        promise.complete(user);
+//      }, res -> {
+//        if (res.succeeded()) {
+//          ctx.json(res.result());
+//        } else {
+//          ctx.fail(500);
+//        }
+//      });
+
+        return object; //
+      }).onSuccess(json -> response.setStatusCode(200).end(json.encodePrettily()))
+
+      .onFailure(t -> response.setStatusCode(400).end(t.getMessage()));
   }
 }
