@@ -1,8 +1,11 @@
 package com.be.stack.game;
 
+import static com.be.stack.game.security.CorsConfigurationHandler.ALLOWED_API_PATTERN;
+
 import com.be.stack.game.handler.AuthFilterHandler;
 import com.be.stack.game.handler.FailureHandle;
 import com.be.stack.game.handler.UserHandler;
+import com.be.stack.game.security.CorsConfigurationHandler;
 import com.be.stack.game.service.HealthCheckService;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -46,6 +49,9 @@ public class MainVerticle extends AbstractVerticle {
     var userHandler = new UserHandler(mongoClient);
     var failureHandler = new FailureHandle();
     var router = Router.router(vertx);
+
+    // Cors configuration
+    router.route(ALLOWED_API_PATTERN).handler(CorsConfigurationHandler.initializeCorsHandler());
 
     // Health Check Route
     router.get(ROUTE_HEALTH_PATH).handler(HealthCheckService.createHealthCheckHandler(mongoClient, vertx));
