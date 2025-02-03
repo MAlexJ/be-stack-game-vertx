@@ -4,11 +4,12 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
-import java.util.logging.Logger;
 
 public class UserRepository {
 
-  private static final Logger LOG = Logger.getLogger(UserRepository.class.getName());
+  private static final String USER_COLLECTION = "user";
+
+  private static final String USER_INFO_COLLECTION = "user_info";
 
   private final MongoClient mongoClient;
 
@@ -16,34 +17,28 @@ public class UserRepository {
     this.mongoClient = mongoClient;
   }
 
-  public JsonObject commandFindFullUserInfoById(Long userId) {
-    JsonArray pipeline =
-        new JsonArray()
-            .add(new JsonObject().put("$match", new JsonObject().put("userId", userId)))
-            .add(
-                new JsonObject()
-                    .put(
-                        "$lookup",
-                        new JsonObject()
-                            .put("from", "user_info")
-                            .put("localField", "info")
-                            .put("foreignField", "_id")
-                            .put("as", "info")))
-            .add(
-                new JsonObject()
-                    .put(
-                        "$unwind",
-                        new JsonObject()
-                            .put("path", "$info")
-                            .put("preserveNullAndEmptyArrays", true)));
 
-    return new JsonObject()
-        .put("aggregate", "user")
-        .put("pipeline", pipeline)
-        .put("cursor", new JsonObject());
-  }
-
-  public Future<JsonObject> aggregateFullUserInfoByUserId(JsonObject command) {
+  public Future<JsonObject> fetchUserFullInfo(Long userId) {
+    var command = buildFullUserInfoAggregationQuery(userId);
     return this.mongoClient.runCommand("aggregate", command);
   }
+
+  private JsonObject buildFullUserInfoAggregationQuery(Long userId) {
+    var match = new JsonObject().put("$match", new JsonObject().put("userId", userId));
+    var lookup = new JsonObject().put("$lookup", new JsonObject() //
+      .put("from", USER_INFO_COLLECTION) //
+      .put("localField", "info") //
+      .put("foreignField", "_id") //
+      .put("as", "info"));
+    var unwind =
+      new JsonObject().put("$unwind", new JsonObject().put("path", "$info").put("preserveNullAndEmptyArrays", true));
+
+    var pipeline = new JsonArray().add(match).add(lookup).add(unwind);
+
+    return new JsonObject()  //
+      .put("aggregate", USER_COLLECTION) //
+      .put("pipeline", pipeline) //
+      .put("cursor", new JsonObject());
+  }
+
 }
