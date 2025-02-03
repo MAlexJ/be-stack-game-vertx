@@ -1,5 +1,7 @@
 package com.be.stack.game.handler;
 
+import static com.be.stack.game.handler.AuthFilterHandler.TG_INIT_DATA_USER_ID;
+
 import com.be.stack.game.dto.UserDto;
 import com.be.stack.game.repository.UserRepository;
 
@@ -24,14 +26,26 @@ public class UserHandler {
   }
 
   public void findAllUserInfoByUserId(RoutingContext ctx) {
-    ctx.vertx().executeBlocking(() -> {
-      Long userId = Optional.ofNullable(ctx.get("userId")).map(String::valueOf).map(Long::parseLong).orElseThrow();
-      JsonObject command = userRepository.commandFindFullUserInfoById(userId);
-      return userRepository.aggregateFullUserInfoByUserId(command) //
-        .map(mapJsonObjectToUserDto()) //
-        .onSuccess(ctx::json) //
-        .onFailure(err -> ctx.fail(400, err));
-    }, false);
+    Future.succeededFuture(getUserId(ctx)) //
+      .map(userRepository::commandFindFullUserInfoById) //
+      .compose(userRepository::aggregateFullUserInfoByUserId) //
+      .map(this::mapJsonObjectToUserDto) //
+      .onSuccess(ctx::json)
+      .onFailure(throwable -> ctx.response().setStatusCode(400).setStatusMessage(throwable.getMessage()));
+
+//    ctx.vertx().executeBlocking(() -> {
+//      Long userId = Optional.ofNullable(ctx.get("userId")).map(String::valueOf).map(Long::parseLong).orElseThrow();
+//      JsonObject command = userRepository.commandFindFullUserInfoById(userId);
+//      return userRepository.aggregateFullUserInfoByUserId(command) //
+//        .map(mapJsonObjectToUserDto()) //
+//        .onSuccess(ctx::json) //
+//        .onFailure(err -> ctx.fail(400, err));
+//    }, false);
+  }
+
+
+  private Long getUserId(RoutingContext ctx) {
+    return Optional.ofNullable(ctx.get(TG_INIT_DATA_USER_ID)).map(String::valueOf).map(Long::parseLong).orElseThrow();
   }
 
 
@@ -41,6 +55,12 @@ public class UserHandler {
       JsonObject userJsonObject = jsonArray.getJsonObject(0);
       return userJsonObject.mapTo(UserDto.class);
     };
+  }
+
+  private UserDto mapJsonObjectToUserDto(JsonObject jsonObject) {
+    var jsonArray = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
+    JsonObject userJsonObject = jsonArray.getJsonObject(0);
+    return userJsonObject.mapTo(UserDto.class);
   }
 
 
