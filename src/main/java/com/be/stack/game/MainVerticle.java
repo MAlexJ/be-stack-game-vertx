@@ -3,6 +3,7 @@ package com.be.stack.game;
 import com.be.stack.game.handler.AuthFilterHandler;
 import com.be.stack.game.handler.FailureHandle;
 import com.be.stack.game.handler.UserHandler;
+import com.be.stack.game.service.HealthCheckService;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.vertx.core.AbstractVerticle;
@@ -19,6 +20,8 @@ public class MainVerticle extends AbstractVerticle {
   private static final Logger LOG = Logger.getLogger(MainVerticle.class.getName());
 
   public static final String ROUTE_USER_PATH = "/api/user";
+
+  public static final String ROUTE_HEALTH_PATH = "/health";
 
   private final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
@@ -44,6 +47,10 @@ public class MainVerticle extends AbstractVerticle {
     var failureHandler = new FailureHandle();
     var router = Router.router(vertx);
 
+    // Health Check Route
+    router.get(ROUTE_HEALTH_PATH).handler(HealthCheckService.createHealthCheckHandler(mongoClient, vertx));
+
+    // User Route
     router.get(ROUTE_USER_PATH).handler(authFilterHandler::handle).handler(userHandler::findAllUserInfoByUserId)
       .failureHandler(failureHandler::handle);
 

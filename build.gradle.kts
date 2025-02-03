@@ -37,6 +37,13 @@ dependencies {
   implementation("io.vertx:vertx-web")
   implementation("io.vertx:vertx-json-schema")
   implementation("io.vertx:vertx-mongo-client")
+  // SLF4J API
+  implementation("org.slf4j:slf4j-api:2.0.0")
+
+  // Logback Classic (SLF4J implementation)
+  implementation("ch.qos.logback:logback-classic:1.2.10")
+
+  implementation("io.vertx:vertx-health-check:$vertxVersion")
   // https://mvnrepository.com/artifact/io.github.cdimascio/java-dotenv
   implementation("io.github.cdimascio:java-dotenv:5.2.2")
 // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
