@@ -49,6 +49,7 @@ public class MainVerticle extends AbstractVerticle {
 
     // Health Check Route
     router.get(ROUTE_HEALTH_PATH).handler(HealthCheckService.createHealthCheckHandler(mongoClient, vertx));
+    router.head(ROUTE_HEALTH_PATH).handler(HealthCheckService.createHealthCheckHandler(mongoClient, vertx));
 
     // User Route
     router.get(ROUTE_USER_PATH).handler(authFilterHandler::handle).handler(userHandler::findAllUserInfoByUserId)
