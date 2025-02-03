@@ -1,6 +1,9 @@
 package com.be.stack.game.handler;
 
+import com.be.stack.game.dto.UserDto;
 import com.be.stack.game.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
@@ -21,23 +24,29 @@ public class UserHandler {
   }
 
   public void findAllUserInfoByUserId(RoutingContext context) {
-    Long userId =
-        Optional.ofNullable(context.get("userId"))
-            .map(String::valueOf)
-            .map(Long::parseLong)
-            .orElseThrow();
+
+    ObjectMapper mapper = new ObjectMapper();
+
+
+    Long userId = Optional.ofNullable(context.get("userId")).map(String::valueOf).map(Long::parseLong).orElseThrow();
     HttpServerResponse response = context.response();
 
     JsonObject command = userRepository.commandFindFullUserInfoById(userId);
     Future<JsonObject> jsonObjectFuture = userRepository.aggregateFullUserInfoByUserId(command);
 
-    jsonObjectFuture
-        .map(
-            jsonObject -> {
-              JsonArray result = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
-              return result.getJsonObject(0);
-            })
-        .onSuccess(userJson -> response.setStatusCode(200).end(userJson.encodePrettily()))
-        .onFailure(throwable -> response.setStatusCode(400).end(throwable.getMessage()));
+    jsonObjectFuture.map(jsonObject -> {
+        JsonArray result = jsonObject.getJsonObject("cursor").getJsonArray("firstBatch");
+
+        JsonObject object = result.getJsonObject(0);
+
+        UserDto userDto
+          = object.mapTo(UserDto.class);
+
+        System.out.printf("");
+
+        return context.json(userDto);
+//          return "Hello cat";
+      }).onSuccess(r -> response.setStatusCode(200))
+      .onFailure(t -> response.setStatusCode(400).end(t.getMessage()));
   }
 }

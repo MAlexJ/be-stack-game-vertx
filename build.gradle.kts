@@ -24,6 +24,8 @@ val launcherClassName = "io.vertx.core.Launcher"
 val watchForChange = "src/**/*"
 val doOnChange = "${projectDir}/gradlew classes"
 
+val jacksonDatabindVersion: String by project
+
 application {
   mainClass.set(launcherClassName)
 }
@@ -39,6 +41,8 @@ dependencies {
   implementation("io.github.cdimascio:java-dotenv:5.2.2")
 // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
   implementation("org.slf4j:slf4j-api:2.0.16")
+  // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+  implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion")
 
   runtimeOnly("io.netty:netty-resolver-dns-native-macos:$resolverDnsVersion:osx-aarch_64")
   testImplementation("io.vertx:vertx-junit5")
