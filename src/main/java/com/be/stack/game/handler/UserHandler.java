@@ -31,7 +31,7 @@ public class UserHandler {
         .map(mapJsonObjectToUserDto()) //
         .onSuccess(ctx::json) //
         .onFailure(err -> ctx.fail(400, err));
-    });
+    }, false);
   }
 
 
